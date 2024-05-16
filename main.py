@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 from audio_bar import AudioBar
 
-AUDIO_FILE = 'risk-of-rain.mp3'
+AUDIO_FILE = 'hope.mp3'
 
 def load_audio_data(audio_file):
     # time_series: A NumPy array representing the audio signal (amplitude values over time).
@@ -63,17 +63,40 @@ def main(audio_file):
     # Load and play audio
     pygame.mixer.music.load(audio_file)
     pygame.mixer.music.play(0)
+    change_time = 0
 
     running = True
     while running:
         # Calculate time difference
-        current_ticks = pygame.time.get_ticks()
+        
+        current_ticks = pygame.mixer.music.get_pos() + change_time
+        print(current_ticks)
         delta_time = (current_ticks - last_frame_ticks) / 1000.0
         last_frame_ticks = current_ticks
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    # Fast forward by 5 seconds
+                    
+                    current_time = pygame.mixer.music.get_pos()
+                    change_time +=5000
+                    pygame.mixer.music.set_pos((current_time + change_time)/1000)
+                   
+                elif event.key == pygame.K_LEFT:
+                    # Reverse by 5 seconds
+                    
+                    current_time = pygame.mixer.music.get_pos()
+                    change_time -=5000
+                    if(current_time + change_time < 0):
+                        pygame.mixer.music.unload()
+                        pygame.mixer.music.load(audio_file)
+                        pygame.mixer.music.play(0)
+                        change_time = 0
+                    else:
+                        pygame.mixer.music.set_pos((current_time + change_time)/1000)
 
         screen.fill('Black')
 
@@ -81,7 +104,7 @@ def main(audio_file):
         skip = False # Makee gap between each bar
         for bar in bars:
             if not skip:
-                bar.update(delta_time, get_decibel(pygame.mixer.music.get_pos() / 1000.0, bar.freq))
+                bar.update(delta_time, get_decibel(current_ticks / 1000.0, bar.freq))
                 bar.render(screen)
             skip = not skip
 
