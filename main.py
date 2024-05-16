@@ -1,30 +1,9 @@
-import librosa
 import numpy as np
 import pygame
+from music_player import MusicPlayer
 from audio_bar import AudioBar
 
 AUDIO_FILE = 'hope.mp3'
-
-def load_audio_data(audio_file):
-    # time_series: A NumPy array representing the audio signal (amplitude values over time).
-    # sample_rate: The number of samples (data points) per second (Hz).
-    time_series, sample_rate = librosa.load(audio_file)
-
-    # Compute STFT to get amplitude values
-    stft = np.abs(librosa.stft(time_series, hop_length=512, n_fft=2048))
-
-    # Convert amplitude to decibels
-    spectrogram = librosa.amplitude_to_db(stft, ref=np.max)
-
-    # Get frequencies and times
-    frequencies = librosa.fft_frequencies(n_fft=2048)
-    times = librosa.frames_to_time(np.arange(spectrogram.shape[1]), sr=sample_rate, hop_length=512, n_fft=2048)
-
-    # Calculate index ratios
-    time_index_ratio = len(times) / times[-1]
-    freq_index_ratio = len(frequencies) / frequencies[-1]
-
-    return spectrogram, time_index_ratio, freq_index_ratio
 
 def create_audio_bars(screen_w, screen_h):
     # Create AudioBar for multiple frequencies
@@ -39,14 +18,17 @@ def create_audio_bars(screen_w, screen_h):
 
     return bars
 
+def handle_key_presses(event, music_player):
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RIGHT:
+            music_player.fast_forward(5)
+        elif event.key == pygame.K_LEFT:
+            music_player.reverse(5)
+        elif event.key == pygame.K_SPACE:
+            music_player.pause()
+
 def main(audio_file):
-    # Load audio data
-    spectrogram, time_index_ratio, freq_index_ratio = load_audio_data(audio_file)
-
-    # Return the decibel level at the curent target_time
-    def get_decibel(target_time, freq):
-        return spectrogram[int(freq * freq_index_ratio)][int(target_time * time_index_ratio)]
-
+   
     # Set up the screen
     pygame.init()
     infoObject = pygame.display.Info()
@@ -57,54 +39,33 @@ def main(audio_file):
     # Create audio bars
     bars = create_audio_bars(screen_w, screen_h)
 
-    # Initialize timing
-    last_frame_ticks = pygame.time.get_ticks()
+    # Create MusicPlayer object
+    music_player = MusicPlayer(audio_file)
+    music_player.load_audio_data()
+    music_player.play()
 
-    # Load and play audio
-    pygame.mixer.music.load(audio_file)
-    pygame.mixer.music.play(0)
-    change_time = 0
+    # Initialize timing
+    last_frame_ticks = music_player.get_current_time()
 
     running = True
     while running:
         # Calculate time difference
-        
-        current_ticks = pygame.mixer.music.get_pos() + change_time
-        print(current_ticks)
+        current_ticks = music_player.get_current_time()
         delta_time = (current_ticks - last_frame_ticks) / 1000.0
         last_frame_ticks = current_ticks
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    # Fast forward by 5 seconds
-                    
-                    current_time = pygame.mixer.music.get_pos()
-                    change_time +=5000
-                    pygame.mixer.music.set_pos((current_time + change_time)/1000)
-                   
-                elif event.key == pygame.K_LEFT:
-                    # Reverse by 5 seconds
-                    
-                    current_time = pygame.mixer.music.get_pos()
-                    change_time -=5000
-                    if(current_time + change_time < 0):
-                        pygame.mixer.music.unload()
-                        pygame.mixer.music.load(audio_file)
-                        pygame.mixer.music.play(0)
-                        change_time = 0
-                    else:
-                        pygame.mixer.music.set_pos((current_time + change_time)/1000)
+            handle_key_presses(event, music_player)
 
         screen.fill('Black')
 
         # Display bars
-        skip = False # Makee gap between each bar
+        skip = False  # Make gap between each bar
         for bar in bars:
             if not skip:
-                bar.update(delta_time, get_decibel(current_ticks / 1000.0, bar.freq))
+                bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
                 bar.render(screen)
             skip = not skip
 
