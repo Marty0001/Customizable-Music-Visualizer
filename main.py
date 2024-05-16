@@ -1,9 +1,10 @@
 import numpy as np
 import pygame
+import os
 from music_player import MusicPlayer
 from audio_bar import AudioBar
 
-AUDIO_FILE = 'hope.mp3'
+AUDIO_FILE = 'playlist'
 
 def create_audio_bars(screen_w, screen_h):
     # Create AudioBar for multiple frequencies
@@ -13,24 +14,29 @@ def create_audio_bars(screen_w, screen_h):
     x = (screen_w - bar_width * len(freq_range)) / 2
 
     for freq in freq_range:
-        bars.append(AudioBar(x, screen_h / 2, freq, max_height=screen_h / 3, width=bar_width))
+        bars.append(AudioBar(x, screen_h / 2, freq, max_height=screen_h / 2.5, width=bar_width))
         x += bar_width
 
     return bars
 
 def handle_key_presses(event, music_player):
     if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_RIGHT:
+        if event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            music_player.next()
+        elif event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            music_player.prev()
+        elif event.key == pygame.K_RIGHT:
             music_player.fast_forward(5)
         elif event.key == pygame.K_LEFT:
-            music_player.reverse(5)
+            music_player.rewind(5)
         elif event.key == pygame.K_SPACE:
             music_player.pause()
 
-def main(audio_file):
+def main(songs):
    
     # Set up the screen
     pygame.init()
+    pygame.display.set_caption("Audio Visualizer")
     infoObject = pygame.display.Info()
     screen_w = int(infoObject.current_w / 4)
     screen_h = screen_w
@@ -39,16 +45,23 @@ def main(audio_file):
     # Create audio bars
     bars = create_audio_bars(screen_w, screen_h)
 
-    # Create MusicPlayer object
-    music_player = MusicPlayer(audio_file)
-    music_player.load_audio_data()
-    music_player.play()
+    # Create MusicPlayer object for each song/audio
+    
+    music_player = MusicPlayer(songs)
 
+    music_player.play()
+    
     # Initialize timing
     last_frame_ticks = music_player.get_current_time()
 
     running = True
     while running:
+
+        if((music_player.get_current_time()) >= music_player.get_length()):
+            music_player.next()
+            last_frame_ticks = 0
+
+
         # Calculate time difference
         current_ticks = music_player.get_current_time()
         delta_time = (current_ticks - last_frame_ticks) / 1000.0
@@ -57,6 +70,7 @@ def main(audio_file):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+        
             handle_key_presses(event, music_player)
 
         screen.fill('Black')
@@ -74,4 +88,7 @@ def main(audio_file):
     pygame.quit()
 
 if __name__ == "__main__":
-    main(AUDIO_FILE)
+    # Create the full path for each song/audio file
+    playlist = os.listdir(AUDIO_FILE)
+    songs = [os.path.join(AUDIO_FILE, song) for song in playlist if os.path.isfile(os.path.join(AUDIO_FILE, song))]
+    main(songs)

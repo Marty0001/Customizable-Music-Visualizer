@@ -23,13 +23,12 @@ class AudioBar:
         if self.height > self.max_height:
             self.height = self.max_height
 
-    def update(self, dt, decibel):
+    def update(self, delta_time, decibel):
 
         desired_height = decibel * self.__decibel_height_ratio + self.max_height
 
-        speed = (desired_height - self.height)/0.1
-
-        self.height += speed * dt
+        speed = (desired_height - self.height)/0.01 if desired_height > self.max_height else (desired_height - self.height)/0.1 # Bigger bars move faster
+        self.height += speed * delta_time
 
         self._limit()
 
