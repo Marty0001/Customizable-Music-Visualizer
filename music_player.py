@@ -74,11 +74,7 @@ class MusicPlayer:
         self.stop()
 
         # Go to first song in playlist if at last song
-        if self.track_num == len(self.playlist) - 1:
-            self.track_num = 0
-        else:
-            self.track_num += 1
-
+        self.track_num = 0 if self.track_num == len(self.playlist) - 1 else self.track_num + 1
         self.current_song = self.playlist[self.track_num]
         self.play()
     
@@ -86,13 +82,10 @@ class MusicPlayer:
         self.stop()
         
         # Go to last song in playlist if at first song
-        if self.track_num == 0:
-            self.track_num = len(self.playlist) - 1
-        else:
-            self.track_num -= 1
-
+        self.track_num = len(self.playlist) - 1 if self.track_num == 0 else self.track_num - 1
         self.current_song = self.playlist[self.track_num]
         self.play()
 
+    # Time passed since song was played + cumulative change in time (fast forward or rewind)
     def get_current_time(self):
-        return pygame.mixer.music.get_pos() + self.change_time # Time passed since song was played + cumulative change in time (fast forward or rewind)
+        return pygame.mixer.music.get_pos() + self.change_time
