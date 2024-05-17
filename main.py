@@ -9,12 +9,12 @@ PLAYLIST = 'playlist' # folder containing .mp3 and .wav files
 
 def create_audio_bars(screen_w, screen_h):
     bars = []
-    freq_range = np.arange(0, 8000, 100) # Determines number of bars
+    freq_range = np.arange(0, 8000, 50) # Determines number of bars
     bar_width = (screen_w / len(freq_range)) / 2
     x = 0 # X position on screen
 
     for freq in freq_range:
-        bars.append(AudioBar(x, screen_h / 2, freq, max_height=screen_h / 2.5, width=bar_width))
+        bars.append(AudioBar(x, screen_h / 2, freq, max_height=screen_h / 2.5, width=bar_width, color_cycle=True))
         x += bar_width * 2
 
     return bars
@@ -32,7 +32,7 @@ def create_audio_bars_circle(screen_w, screen_h):
 
     for i, freq in enumerate(freq_range):
         angle = i * angle_step  # Adjust the angle for each bar
-        bars.append(AudioBar(center_x, center_y, freq, max_height=100, width=3, angle=angle, radius=radius))
+        bars.append(AudioBar(center_x, center_y, freq, max_height=100, width=3, angle=angle, radius=radius, color_cycle=True))
         
     return bars
 
