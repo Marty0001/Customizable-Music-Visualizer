@@ -1,4 +1,4 @@
-Personal mp3-player project with the goal of adding as much customizability to audio visualization as possible.
+mp3-player project with the goal of adding as much customizability to audio visualization as possible.
 
 To run, use 'pip install -r requirements.txt', change the PLAYLIST file name in main.py if needed, and it should be good to go by running main.py
 
