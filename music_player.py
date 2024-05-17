@@ -3,17 +3,18 @@ import librosa
 import numpy as np
 
 class MusicPlayer:
-    def __init__(self, songs):
-        self.current_song = 0
-        self.songs = songs
-        self.audio_file = self.songs[self.current_song]
+    def __init__(self, playlist):
+        self.track_num = 0
+        self.playlist = playlist
+        self.current_song = self.playlist[self.track_num]
         self.change_time = 0 # Cumulative count of seconds fast forwarded or reveresed
         self.is_paused = False
     
+    # Audio data needed to get dB at certian times for visual audio bar
     def _load_audio_data(self):
         # time_series: A NumPy array representing the audio signal (amplitude values over time).
         # sample_rate: The number of samples (data points) per second (Hz).
-        time_series, sample_rate = librosa.load(self.audio_file)
+        time_series, sample_rate = librosa.load(self.current_song)
 
         # Compute STFT to get amplitude values
         stft = np.abs(librosa.stft(time_series, hop_length=512, n_fft=2048))
@@ -46,7 +47,7 @@ class MusicPlayer:
         self.change_time -= seconds * 1000
         if current_time + self.change_time < 0: # If rewinded below 0, reload the song
             self.stop()
-            pygame.mixer.music.load(self.audio_file)
+            pygame.mixer.music.load(self.current_song)
             pygame.mixer.music.play()
             self.change_time = 0
         else:
@@ -55,7 +56,7 @@ class MusicPlayer:
     def play(self):
         self._load_audio_data()
         self.change_time = 0
-        pygame.mixer.music.load(self.audio_file)
+        pygame.mixer.music.load(self.current_song)
         pygame.mixer.music.play()
 
     def pause(self):
@@ -73,24 +74,24 @@ class MusicPlayer:
         self.stop()
 
         # Go to first song in playlist if at last song
-        if self.current_song == len(self.songs) - 1:
-            self.current_song = 0
+        if self.track_num == len(self.playlist) - 1:
+            self.track_num = 0
         else:
-            self.current_song += 1
+            self.track_num += 1
 
-        self.audio_file = self.songs[self.current_song]
+        self.current_song = self.playlist[self.track_num]
         self.play()
     
     def prev(self):
         self.stop()
         
         # Go to last song in playlist if at first song
-        if self.current_song == 0:
-            self.current_song = len(self.songs) - 1
+        if self.track_num == 0:
+            self.track_num = len(self.playlist) - 1
         else:
-            self.current_song -= 1
+            self.track_num -= 1
 
-        self.audio_file = self.songs[self.current_song]
+        self.current_song = self.playlist[self.track_num]
         self.play()
 
     def get_current_time(self):

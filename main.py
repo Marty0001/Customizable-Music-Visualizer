@@ -4,7 +4,7 @@ import os
 from music_player import MusicPlayer
 from audio_bar import AudioBar
 
-AUDIO_FILE = 'playlist'
+PLAYLIST = 'playlist' # folder containing .mp3 and .wav files
 
 def create_audio_bars(screen_w, screen_h):
     # Create AudioBar for multiple frequencies
@@ -21,9 +21,9 @@ def create_audio_bars(screen_w, screen_h):
 
 def handle_key_presses(event, music_player):
     if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+        if event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT: # SHIFT + R ARROW KEY
             music_player.next()
-        elif event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+        elif event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_SHIFT: # SHIFT + L ARROW KEY
             music_player.prev()
         elif event.key == pygame.K_RIGHT:
             music_player.fast_forward(5)
@@ -32,7 +32,7 @@ def handle_key_presses(event, music_player):
         elif event.key == pygame.K_SPACE:
             music_player.pause()
 
-def main(songs):
+def main(playlist):
    
     # Set up the screen
     pygame.init()
@@ -45,9 +45,8 @@ def main(songs):
     # Create audio bars
     bars = create_audio_bars(screen_w, screen_h)
 
-    # Create MusicPlayer object for each song/audio
-    
-    music_player = MusicPlayer(songs)
+    # Create MusicPlayer object which contains entire playlist of songs
+    music_player = MusicPlayer(playlist)
 
     music_player.play()
     
@@ -57,7 +56,8 @@ def main(songs):
     running = True
     while running:
 
-        if((music_player.get_current_time()) >= music_player.get_length()):
+        # If the current song time is within 100ms of the length, go to next song to avoid OOB error
+        if((music_player.get_current_time()) >= music_player.get_length() - 100):
             music_player.next()
             last_frame_ticks = 0
 
@@ -89,6 +89,6 @@ def main(songs):
 
 if __name__ == "__main__":
     # Create the full path for each song/audio file
-    playlist = os.listdir(AUDIO_FILE)
-    songs = [os.path.join(AUDIO_FILE, song) for song in playlist if os.path.isfile(os.path.join(AUDIO_FILE, song))]
-    main(songs)
+    songs = os.listdir(PLAYLIST)
+    playlist = [os.path.join(PLAYLIST, song) for song in songs if os.path.isfile(os.path.join(PLAYLIST, song))]
+    main(playlist)
