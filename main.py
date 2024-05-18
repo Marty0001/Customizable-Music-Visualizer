@@ -5,35 +5,22 @@ import os
 from music_player import MusicPlayer
 from audio_bar import AudioBar
 
-PLAYLIST = 'playlist' # folder containing .mp3 and .wav files
+PLAYLIST = 'playlist' # Folder containing .mp3 and .wav files
 
+# Create array of AudioBars, each representing a different frequency
 def create_audio_bars(screen_w, screen_h):
     bars = []
+    radius = min(screen_w, screen_h) // 4  # Radius from center of display for circular display
     freq_range = np.arange(0, 8000, 50) # Determines number of bars
-    bar_width = (screen_w / len(freq_range)) / 2
-    x = 0 # X position on screen
-
-    for freq in freq_range:
-        bars.append(AudioBar(x, screen_h / 2, freq, max_height=screen_h / 2.5, width=bar_width, color_cycle=True))
-        x += bar_width * 2
-
-    return bars
-
-def create_audio_bars_circle(screen_w, screen_h):
-    center_x = screen_w // 2
-    center_y = screen_h // 2
-
-    radius = min(screen_w, screen_h) // 4  # Radius from center of display
-
-    bars = []
-    freq_range = np.arange(0, 8000, 50) # Determines number of bars
-
+    bar_width = (screen_w / len(freq_range)) # Make sure all bars can fit on screen horizontaly
     angle_step = 2 * math.pi / len(freq_range)  # Change in angle between each bar
+    x = 0 # X position on display for horizontal bars
 
     for i, freq in enumerate(freq_range):
-        angle = i * angle_step  # Adjust the angle for each bar
-        bars.append(AudioBar(center_x, center_y, freq, max_height=100, width=3, angle=angle, radius=radius, color_cycle=True))
-        
+        angle = i * angle_step
+        bars.append(AudioBar(x, screen_h//2, freq, max_height=100, width=bar_width, angle=angle, radius=radius, color_cycle=True, color_speed=10))
+        x += bar_width * 2
+
     return bars
 
 def handle_key_presses(event, music_player):
@@ -59,10 +46,7 @@ def main(playlist):
     screen_h = screen_w
     screen = pygame.display.set_mode([screen_w, screen_h])
 
-    # Create audio bars for circle
-    circle = True
-    circle_bars = create_audio_bars_circle(screen_w, screen_h)
-    # Create audio bars for horizontal line
+    # Create audio bars
     bars = create_audio_bars(screen_w, screen_h)
 
     # Create MusicPlayer object which contains entire playlist of songs
@@ -94,15 +78,10 @@ def main(playlist):
         screen.fill('Black')
 
         # Display bars
-        if circle:
-            for bar in circle_bars:
-                bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
-                bar.render_circle(screen)
-        else:
-            for bar in bars:
-                bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
-                bar.render(screen)
-
+        for bar in bars:
+            bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
+            bar.render(screen)
+       
         pygame.display.update()
 
     pygame.quit()

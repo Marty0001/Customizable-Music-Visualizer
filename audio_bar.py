@@ -3,10 +3,10 @@ import math
 
 class AudioBar:
 
-    def __init__(self, x, y, freq, color=(255, 255, 255), width=50, min_height=1, max_height=100, min_decibel=-80, max_decibel=0, shrink_speed = 10, grow_speed = 40, angle = 0, radius = 0, color_cycle = False, color_speed = 100):
+    def __init__(self, x, y, freq, color=(255, 255, 255), width=3, min_height=1, max_height=100, min_decibel=-80, max_decibel=0, shrink_speed = 10, grow_speed = 40, angle = 0, radius = 0, color_cycle = False, color_speed = 100):
         self.x, self.y = x, y
         self.freq = freq
-        self.color = pygame.Color(*color)
+        self.color = pygame.Color(color)
         self.width = width
         self.min_height = min_height
         self.max_height = max_height
@@ -64,8 +64,10 @@ class AudioBar:
 
     # Bars are arranged in a circle
     def render_circle(self, screen):
-        end_x = self.x + (self.radius + self.height) * math.cos(self.angle)
-        end_y = self.y + (self.radius + self.height) * math.sin(self.angle)
-        start_x = self.x + self.radius * math.cos(self.angle)
-        start_y = self.y + self.radius * math.sin(self.angle)
+        end_x = (screen.get_width() // 2) + (self.radius + self.height) * math.cos(self.angle)
+        end_y = (screen.get_height() // 2) + (self.radius + self.height) * math.sin(self.angle)
+        start_x = (screen.get_width() // 2) + self.radius * math.cos(self.angle)
+        start_y = (screen.get_height() // 2) + self.radius * math.sin(self.angle)
         pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
+
+    # add methods to change color, width, height, speed, etc. for future GUI buttons
