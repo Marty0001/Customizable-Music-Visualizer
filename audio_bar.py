@@ -4,8 +4,7 @@ import random
 
 class AudioBar:
     def __init__(self, screen_w, screen_h, x, y, freq, color=(255, 255, 255), width=3, min_height=1, max_height=100, min_decibel=-80, max_decibel=0,
-    shrink_speed=20, grow_speed=40, angle=0, radius=0, color_cycle=False, color_speed=100, sparks=False):  
-
+    shrink_speed=20, grow_speed=40, angle=0, radius=0, color_cycle=False, color_speed=100, gen_sparks=False):  
         self.screen_w, self.screen_h = screen_w, screen_h
         self.x, self.y = x, y
         self.freq = freq
@@ -30,14 +29,14 @@ class AudioBar:
         #Future ideas: rain, balls, top, left, right, double side, top and bottom, wave(differnt class maybe?)
 
         # Spark attributes
-        self.sparks = sparks # Decide to render sparks or not
-        self.spark_active = False
-        self.spark_size = 1.5 # size in pixels
-        self.spark_spawn_rate = 1 # % chance to spawn spark. Must be 0-1
-        self.spark_fade_rate = 0.001 # ~ 0.001-1
+        self.sparks = []
+        self.spark_limit = 5
+        self.gen_sparks = gen_sparks # Decide to render sparks or not
+        self.spark_spawn_rate = 0.01 # % chance to spawn spark. Must be 0-1
+        self.spark_size = 2 # size in pixels
+        self.spark_fade_rate = 0.01 # ~ 0.001-1
         self.spark_velocity_rate = 0.5 # ~ 0.1-5
         self.spark_gravity = 0.001 # ~ 0.001-0.01
-        self.spark_color = pygame.Color(color)
 
     def _create_spark(self):
         """
@@ -48,59 +47,27 @@ class AudioBar:
 
         # Create the spark at the end of the bar, depending on the render type
         if self.render_type["circle"]:
-            self.spark_x = (self.screen_w // 2) + (self.radius + self.height) * math.cos(self.angle)
-            self.spark_y = (self.screen_w // 2) + (self.radius + self.height) * math.sin(self.angle)
+            spark_x = (self.screen_w // 2) + (self.radius + self.height) * math.cos(self.angle)
+            spark_y = (self.screen_w // 2) + (self.radius + self.height) * math.sin(self.angle)
             
             # Velocity based on the angle
-            self.spark_velocity_x = self.spark_velocity_rate * math.cos(self.angle)
-            self.spark_velocity_y = self.spark_velocity_rate * math.sin(self.angle)
+            spark_velocity_x = self.spark_velocity_rate * math.cos(self.angle)
+            spark_velocity_y = self.spark_velocity_rate * math.sin(self.angle)
 
         else:
-            self.spark_x = self.x
-            self.spark_y = self.y
+            spark_x = self.x
+            spark_y = self.y
 
             if self.render_type["default"] or self.render_type["middle"]:
-                self.spark_y = self.y + self.height
+                spark_y = self.y + self.height
 
-            self.spark_velocity_x = 0
-            self.spark_velocity_y = 1 * self.spark_velocity_rate
+            spark_velocity_x = 0
+            spark_velocity_y = 1 * self.spark_velocity_rate
             if self.render_type["bottom"] or self.render_type["middle"]: # Make spark rise instead of fall for different render types
-                self.spark_velocity_y = -self.spark_velocity_y
+                spark_velocity_y = -spark_velocity_y
 
-        self.spark_fade_rate_sum = 0
-        self.spark_color = self.color
-        self.spark_active = True
-
-    def _update_spark(self, delta_time):
-        """
-        Update the spark's position and color over time.
-        Apply gravity and fade the spark's color towards black.
-        Deactivate the spark if it goes out of bounds or fades to black.
-        """
-
-        # Apply gravity to the spark
-        self.spark_velocity_y += self.spark_gravity
-
-        # Update the spark position
-        self.spark_x += self.spark_velocity_x
-        self.spark_y += self.spark_velocity_y
-
-        self.spark_fade_rate_sum +=self.spark_fade_rate
-
-        # Fade towards black
-        r, g, b, a = self.spark_color
-        r = max(0, r - self.spark_fade_rate_sum)
-        g = max(0, g - self.spark_fade_rate_sum)
-        b = max(0, b - self.spark_fade_rate_sum)
-        self.spark_color = pygame.Color(math.ceil(r), math.ceil(g), math.ceil(b), math.ceil(a))
-
-        # Deactivate the spark if it is fully black or outside of the display
-        if ((self.spark_y < 0 or self.spark_y > self.screen_h or self.spark_x < 0 or self.spark_x > self.screen_w) or 
-        (self.spark_color.r == 0 and self.spark_color.g == 0 and self.spark_color.b == 0)):
-            self.spark_active = False
-
-    def _render_spark(self, screen):
-        pygame.draw.circle(screen, self.spark_color, (int(self.spark_x), int(self.spark_y)), self.spark_size)
+        self.sparks.append(Spark(spark_x, spark_y, spark_velocity_x, spark_velocity_y, 
+            self.spark_size, self.spark_fade_rate, self.spark_velocity_rate, self.spark_gravity, self.color))
 
     def _update_color_cycle(self, delta_time):
         """
@@ -135,13 +102,14 @@ class AudioBar:
         if self.color_cycle:
             self._update_color_cycle(delta_time)
 
-        if self.sparks:
-
-            if self.spark_active:
-                self._update_spark(delta_time)
+        if self.gen_sparks:
+            for spark in self.sparks:
+                spark.update(delta_time, self.screen_w, self.screen_h)
+                if not spark.is_active():
+                    self.sparks.remove(spark)
 
             # chance to create a spark when bar grows. Dont create spark if time is 0 (music is paused)
-            elif self.height > old_height*1.02 and delta_time > 0:
+            if len(self.sparks) < self.spark_limit and self.height > old_height*1.02 and delta_time > 0:
                 if random.random() <= self.spark_spawn_rate:
                     self._create_spark()
 
@@ -183,5 +151,52 @@ class AudioBar:
             start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
             pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width * 2))
 
-        if self.spark_active:
-            self._render_spark(screen)
+        for spark in self.sparks:
+            spark.render(screen)
+
+
+
+class Spark:
+    def __init__(self, x, y, velocity_x, velocity_y, size=2, fade_rate=0.01, velocity_rate=0.5, gravity=0.001, color=(255, 255, 255)):
+        self.x, self.y = x, y
+        self.velocity_x, self.velocity_y = velocity_x, velocity_y
+        self.size = size 
+        self.fade_rate = fade_rate
+        self.velocity_rate = velocity_rate
+        self.gravity = gravity
+        self.color = pygame.Color(color)
+        self.fade_rate_sum = 0
+        self.active = True
+
+    def update(self, delta_time, screen_w, screen_h):
+        """
+        Update the spark's position and color over time.
+        Apply gravity and fade the spark's color towards black.
+        Deactivate the spark if it goes out of bounds or fades to black.
+        """
+        # Apply gravity to the spark
+        self.velocity_y += self.gravity
+
+        # Update the spark position
+        self.x += self.velocity_x
+        self.y += self.velocity_y
+
+        self.fade_rate_sum += self.fade_rate
+
+        # Fade towards black
+        r, g, b, a = self.color
+        r = max(0, r - self.fade_rate_sum)
+        g = max(0, g - self.fade_rate_sum)
+        b = max(0, b - self.fade_rate_sum)
+        self.color = pygame.Color(math.ceil(r), math.ceil(g), math.ceil(b), math.ceil(a))
+
+        # Deactivate the spark if it is fully black or outside of the display
+        if ((self.y < 0 or self.y > screen_h or self.x < 0 or self.x > screen_w) or 
+            (self.color.r == 0 and self.color.g == 0 and self.color.b == 0)):
+            self.active = False
+
+    def is_active(self):
+        return self.active
+
+    def render(self, screen):
+        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.size)
