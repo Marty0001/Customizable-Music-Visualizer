@@ -3,7 +3,7 @@ import math
 import random
 
 class AudioBar:
-    def __init__(self, screen_w, screen_h, x, y, freq, color=(255, 255, 255), width=3, min_height=1, max_height=100, min_decibel=-80, max_decibel=0,
+    def __init__(self, screen_w, screen_h, x, y, freq, color=(255, 255, 255), width=3, min_height=0, max_height=100, min_decibel=-80, max_decibel=0,
     shrink_speed=20, grow_speed=40, angle=0, radius=0, color_cycle=False, color_speed=100, gen_sparks=False):  
         self.screen_w, self.screen_h = screen_w, screen_h
         self.x, self.y = x, y
@@ -25,18 +25,18 @@ class AudioBar:
 
         self.__decibel_height_ratio = (self.max_height - self.min_height) / (self.max_decibel - self.min_decibel) 
 
-        self.render_type = {"default" : False, "bottom" : False, "middle" : False, "circle" : 0} # All render types. Only 1 can be active at a time
+        self.render_type = {"default" : False, "default2" : False, "top" : False, "bottom" : False, "middle" : False, "circle" : 0, "circle_inner" : False, "ring" : False} # All render types. Only 1 can be active at a time
         #Future ideas: rain, balls, top, left, right, double side, top and bottom, wave(differnt class maybe?)
 
         # Spark attributes
         self.sparks = []
-        self.spark_limit = 5
         self.gen_sparks = gen_sparks # Decide to render sparks or not
-        self.spark_spawn_rate = 0.01 # % chance to spawn spark. Must be 0-1
-        self.spark_size = 2 # size in pixels
-        self.spark_fade_rate = 0.01 # ~ 0.001-1
-        self.spark_velocity_rate = 0.5 # ~ 0.1-5
-        self.spark_gravity = 0.001 # ~ 0.001-0.01
+        self.set_spark_limt(5) # Amount of active sparks per bar
+        self.set_spark_spawn_rate(randomize=True) # Miliseconds between each spark creation
+        self.set_spark_velocity_rate()
+        self.set_spark_gravity(0.001)
+
+        self.spark_ticks = self.spark_spawn_rate 
 
     def _create_spark(self):
         """
@@ -45,8 +45,16 @@ class AudioBar:
         Set the spark to be active and match its color to the bar's color.
         """
 
+        # remove these once buttons are added
+        self.set_spark_size(randomize=True)
+        self.set_spark_spawn_rate(100)
+        self.set_spark_swade()
+        self.set_spark_fade_rate(0)
+
+        # *add direction attribute for inner/outer or rise/fall
+
         # Create the spark at the end of the bar, depending on the render type
-        if self.render_type["circle"]:
+        if self.render_type["circle"] or self.render_type["ring"]:
             spark_x = (self.screen_w // 2) + (self.radius + self.height) * math.cos(self.angle)
             spark_y = (self.screen_w // 2) + (self.radius + self.height) * math.sin(self.angle)
             
@@ -54,20 +62,28 @@ class AudioBar:
             spark_velocity_x = self.spark_velocity_rate * math.cos(self.angle)
             spark_velocity_y = self.spark_velocity_rate * math.sin(self.angle)
 
+        elif self.render_type["circle_inner"]:
+            spark_x = (self.screen_w // 2) + (self.radius - self.height) * math.cos(self.angle)
+            spark_y = (self.screen_w // 2) + (self.radius - self.height) * math.sin(self.angle)
+            
+    
+            spark_velocity_x = -self.spark_velocity_rate * math.cos(self.angle)
+            spark_velocity_y = -self.spark_velocity_rate * math.sin(self.angle)
+
         else:
             spark_x = self.x
             spark_y = self.y
 
-            if self.render_type["default"] or self.render_type["middle"]:
-                spark_y = self.y + self.height
+            if self.render_type["default"] or self.render_type["default2"] or self.render_type["top"]:
+                spark_y = self.y + self.height # Start from bottom of bar
 
             spark_velocity_x = 0
             spark_velocity_y = 1 * self.spark_velocity_rate
-            if self.render_type["bottom"] or self.render_type["middle"]: # Make spark rise instead of fall for different render types
-                spark_velocity_y = -spark_velocity_y
+            if self.render_type["bottom"] or self.render_type["middle"]:
+                spark_velocity_y = -spark_velocity_y # Make spark rise instead of fall
 
         self.sparks.append(Spark(spark_x, spark_y, spark_velocity_x, spark_velocity_y, 
-            self.spark_size, self.spark_fade_rate, self.spark_velocity_rate, self.spark_gravity, self.color))
+            self.spark_size, self.spark_fade_rate, self.spark_velocity_rate, self.spark_gravity, self.color, self.spark_swade))
 
     def _update_color_cycle(self, delta_time):
         """
@@ -87,6 +103,14 @@ class AudioBar:
             self.height = self.min_height
         if self.height > self.max_height:
             self.height = self.max_height
+
+    def set_spark_limt(self, limit = 1): self.spark_limit = limit
+    def set_spark_spawn_rate(self, spawn_rate = 100, randomize = False): self.spark_spawn_rate = spawn_rate if not randomize else random.uniform(100, 1000)
+    def set_spark_velocity_rate(self, velocity_rate = 0.5, randomize = False): self.spark_velocity_rate = velocity_rate if not random else random.uniform(0.1, 2)
+    def set_spark_gravity(self, gravity = 0.01, randomize = False): self.spark_gravity = gravity if not randomize else random.uniform(0, 0.01)
+    def set_spark_size(self, size = 2, randomize = False): self.spark_size = size if not randomize else random.uniform(self.width/3, self.width/1.5)
+    def set_spark_fade_rate(self, fade_rate = 0.01, randomize = False): self.spark_fade_rate = fade_rate if not randomize else random.uniform(0, 0.1)
+    def set_spark_swade(self, swade = False, randomize = False): self.spark_swade = swade if not randomize else (True if random.random() <= 0.5 else False)
 
     def update(self, delta_time, decibel):
         """
@@ -109,9 +133,11 @@ class AudioBar:
                     self.sparks.remove(spark)
 
             # chance to create a spark when bar grows. Dont create spark if time is 0 (music is paused)
-            if len(self.sparks) < self.spark_limit and self.height > old_height*1.02 and delta_time > 0:
-                if random.random() <= self.spark_spawn_rate:
+            if len(self.sparks) < self.spark_limit and self.height > old_height and delta_time > 0:
+                if self.spark_ticks > self.spark_spawn_rate:
+                    self.spark_ticks = 0
                     self._create_spark()
+            self.spark_ticks +=1
 
     def render(self, screen, selected_type : str = "default"):
         """
@@ -132,6 +158,15 @@ class AudioBar:
         if self.render_type["default"]:
             self.y = (self.screen_h - self.height) / 2
             pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+
+        elif self.render_type["default2"]:
+            self.y = (self.screen_h - self.height) / 2
+            pygame.draw.rect(screen, self.color, (self.x, self.y, self.width // 2, self.height))
+
+        # Top of bar alligned with top of screen
+        elif self.render_type["top"]:
+            self.y = 0
+            pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
     
         # Bottom of bar alligned with botttom of screen
         elif self.render_type["bottom"]:
@@ -149,15 +184,32 @@ class AudioBar:
             end_y = (self.screen_h // 2) + (self.radius + self.height) * math.sin(self.angle)
             start_x = (self.screen_w // 2) + self.radius * math.cos(self.angle)
             start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
-            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width * 2))
+            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
+
+        elif self.render_type["circle_inner"]:
+            end_x = (self.screen_w // 2) + (self.radius - self.height/1.5) * math.cos(self.angle)
+            end_y = (self.screen_h // 2) + (self.radius - self.height/1.5) * math.sin(self.angle)
+            start_x = (self.screen_w // 2) + self.radius * math.cos(self.angle)
+            start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
+            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
+        
+        elif self.render_type["ring"]:
+            end_x = (self.screen_w // 2) + (self.radius + self.height) * math.cos(self.angle)
+            end_y = (self.screen_h // 2) + (self.radius + self.height) * math.sin(self.angle)
+            start_x = (self.screen_w // 2) + self.radius * math.cos(self.angle)
+            start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
+            #This makes sure only 1 of the Audio bars draws the ring, because they all have unique angles
+            if self.angle == 0:
+                pygame.draw.circle(screen, self.color, (self.screen_w//2, self.screen_h//2), self.radius)
+                pygame.draw.circle(screen, 'Black', (self.screen_w//2, self.screen_h//2), self.radius * 0.99)
+            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
 
         for spark in self.sparks:
             spark.render(screen)
 
-
-
+            
 class Spark:
-    def __init__(self, x, y, velocity_x, velocity_y, size=2, fade_rate=0.01, velocity_rate=0.5, gravity=0.001, color=(255, 255, 255)):
+    def __init__(self, x, y, velocity_x, velocity_y, size=2, fade_rate=0.01, velocity_rate=0.5, gravity=0.001, color=(255, 255, 255), swade = False, shape = "circle"):
         self.x, self.y = x, y
         self.velocity_x, self.velocity_y = velocity_x, velocity_y
         self.size = size 
@@ -165,7 +217,11 @@ class Spark:
         self.velocity_rate = velocity_rate
         self.gravity = gravity
         self.color = pygame.Color(color)
+        self.swade = swade
+        self.shape = shape
         self.fade_rate_sum = 0
+        self.swade_direction = True if random.random() <= 0.5 else False
+        self.swade_sum = 0
         self.active = True
 
     def update(self, delta_time, screen_w, screen_h):
@@ -180,6 +236,18 @@ class Spark:
         # Update the spark position
         self.x += self.velocity_x
         self.y += self.velocity_y
+
+        if self.swade:
+            if self.swade_direction:
+                self.swade_sum += random.uniform(0, 0.01)
+            else:
+                self.swade_sum -= random.uniform(0, 0.01)
+            if random.random() <= 0.05:
+                self.swade_direction = not self.swade_direction
+                self.swade_sum = 0
+        
+        self.x += self.swade_sum
+        self.y += self.swade_sum
 
         self.fade_rate_sum += self.fade_rate
 
@@ -199,4 +267,7 @@ class Spark:
         return self.active
 
     def render(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.size)
+        if self.shape == "rect":
+            pygame.draw.rect(screen, self.color, (self.x, self.y, self.size, self.size))
+        elif self.shape == "circle":
+            pygame.draw.circle(screen, self.color, (self.x, self.y), self.size)

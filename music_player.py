@@ -58,10 +58,15 @@ class MusicPlayer:
     def fast_forward(self, seconds=5):
         """
         Fast forward the current song by a specified number of seconds.
+        Play the next song if fast forward is beyond length to avoid error.
         """
+        
         current_time = pygame.mixer.music.get_pos()
-        self.change_time += seconds * 1000
-        pygame.mixer.music.set_pos((current_time + self.change_time) / 1000)
+        if current_time + (seconds * 1000) < self.get_length():
+            self.change_time += seconds * 1000
+            pygame.mixer.music.set_pos((current_time + self.change_time) / 1000)
+        else:
+            self.next()
 
     def rewind(self, seconds=5):
         """
