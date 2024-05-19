@@ -11,14 +11,14 @@ PLAYLIST = 'playlist' # Folder containing .mp3 and .wav files
 def create_audio_bars(screen_w, screen_h):
     bars = []
     radius = min(screen_w, screen_h) // 4  # Radius from center of display for circular display
-    freq_range = np.arange(0, 8000, 50) # Determines number of bars
-    bar_width = (screen_w / len(freq_range)) # Make sure all bars can fit on screen horizontaly
+    freq_range = np.arange(200, 8000,50) # Determines number of bars
+    bar_width = (screen_w / len(freq_range)) / 2 # Make sure all bars can fit on screen horizontaly
     angle_step = 2 * math.pi / len(freq_range)  # Change in angle between each bar
-    x = 0 # X position on display for horizontal bars
+    x = 0 # X position for horizontal bars
 
     for i, freq in enumerate(freq_range):
         angle = i * angle_step
-        bars.append(AudioBar(x, screen_h//2, freq, max_height=100, width=bar_width, angle=angle, radius=radius, color_cycle=True, color_speed=10))
+        bars.append(AudioBar(screen_w, screen_h, x, screen_h//2, freq, max_height=100, width=bar_width * 2, angle=angle, radius=radius, color_cycle=True, color_speed=10, sparks=True))
         x += bar_width * 2
 
     return bars
@@ -80,7 +80,7 @@ def main(playlist):
         # Display bars
         for bar in bars:
             bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
-            bar.render(screen)
+            bar.render(screen, "circle")
        
         pygame.display.update()
 
