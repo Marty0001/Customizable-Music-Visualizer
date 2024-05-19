@@ -27,16 +27,16 @@ class AudioBar:
         self.__decibel_height_ratio = (self.max_height - self.min_height) / (self.max_decibel - self.min_decibel) 
 
         self.render_type = {"default" : False, "bottom" : False, "middle" : False, "circle" : 0} # All render types. Only 1 can be active at a time
-        #Future ideas: rain, top, left, right, double side, top and bottom, wave(differnt class maybe?)
+        #Future ideas: rain, balls, top, left, right, double side, top and bottom, wave(differnt class maybe?)
 
         # Spark attributes
         self.sparks = sparks # Decide to render sparks or not
         self.spark_active = False
-        self.spark_size = 2 # size in pixels
-        self.spark_spawn_rate = 0.01 # % chance to spawn spark. Must be 0-1
-        self.spark_fade_rate = 1 # ~ 0-5
-        self.spark_velocity_rate = 0.5 # ~ 0-5
-        self.spark_gravity = 0 # ~ 0.001-0.01
+        self.spark_size = 1.5 # size in pixels
+        self.spark_spawn_rate = 1 # % chance to spawn spark. Must be 0-1
+        self.spark_fade_rate = 0.001 # ~ 0.001-1
+        self.spark_velocity_rate = 0.5 # ~ 0.1-5
+        self.spark_gravity = 0.001 # ~ 0.001-0.01
         self.spark_color = pygame.Color(color)
 
     def _create_spark(self):
@@ -59,11 +59,15 @@ class AudioBar:
             self.spark_x = self.x
             self.spark_y = self.y
 
+            if self.render_type["default"] or self.render_type["middle"]:
+                self.spark_y = self.y + self.height
+
             self.spark_velocity_x = 0
             self.spark_velocity_y = 1 * self.spark_velocity_rate
             if self.render_type["bottom"] or self.render_type["middle"]: # Make spark rise instead of fall for different render types
                 self.spark_velocity_y = -self.spark_velocity_y
 
+        self.spark_fade_rate_sum = 0
         self.spark_color = self.color
         self.spark_active = True
 
@@ -81,12 +85,14 @@ class AudioBar:
         self.spark_x += self.spark_velocity_x
         self.spark_y += self.spark_velocity_y
 
+        self.spark_fade_rate_sum +=self.spark_fade_rate
+
         # Fade towards black
         r, g, b, a = self.spark_color
-        r = max(0, r - self.spark_fade_rate)
-        g = max(0, g - self.spark_fade_rate)
-        b = max(0, b - self.spark_fade_rate)
-        self.spark_color = pygame.Color(int(r), int(g), int(b), int(a))
+        r = max(0, r - self.spark_fade_rate_sum)
+        g = max(0, g - self.spark_fade_rate_sum)
+        b = max(0, b - self.spark_fade_rate_sum)
+        self.spark_color = pygame.Color(math.ceil(r), math.ceil(g), math.ceil(b), math.ceil(a))
 
         # Deactivate the spark if it is fully black or outside of the display
         if ((self.spark_y < 0 or self.spark_y > self.screen_h or self.spark_x < 0 or self.spark_x > self.screen_w) or 
@@ -135,7 +141,7 @@ class AudioBar:
                 self._update_spark(delta_time)
 
             # chance to create a spark when bar grows. Dont create spark if time is 0 (music is paused)
-            elif self.height >= old_height and delta_time > 0:
+            elif self.height > old_height*1.02 and delta_time > 0:
                 if random.random() <= self.spark_spawn_rate:
                     self._create_spark()
 
@@ -175,7 +181,7 @@ class AudioBar:
             end_y = (self.screen_h // 2) + (self.radius + self.height) * math.sin(self.angle)
             start_x = (self.screen_w // 2) + self.radius * math.cos(self.angle)
             start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
-            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
+            pygame.draw.line(screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width * 2))
 
         if self.spark_active:
             self._render_spark(screen)

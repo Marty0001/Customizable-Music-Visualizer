@@ -18,7 +18,7 @@ def create_audio_bars(screen_w, screen_h):
 
     for i, freq in enumerate(freq_range):
         angle = i * angle_step
-        bars.append(AudioBar(screen_w, screen_h, x, screen_h//2, freq, max_height=100, width=bar_width * 2, angle=angle, radius=radius, color_cycle=True, color_speed=10, sparks=True))
+        bars.append(AudioBar(screen_w, screen_h, x, screen_h//2, freq, max_height=100, width=bar_width, angle=angle, radius=radius, color_cycle=True, color_speed=10, sparks=True))
         x += bar_width * 2
 
     return bars
