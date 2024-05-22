@@ -79,17 +79,17 @@ class AudioBar:
             spark_velocity_x = self.spark_manager.properties.velocity_rate * math.cos(self.angle)
             spark_velocity_y = self.spark_manager.properties.velocity_rate * math.sin(self.angle)
         
-        # Make sparks fly outward, audjust starting position for half height
+        # Make sparks fly outward, audjust starting position for half height and bigger radius
         elif self.visual_type == "CIRCLE_MIDDLE":
-            spark_x = (self.screen_w // 2) + (self.radius + self.height/2) * math.cos(self.angle)
-            spark_y = (self.screen_w // 2) + (self.radius + self.height/2) * math.sin(self.angle)
+            spark_x = (self.screen_w // 2) + (self.radius*1.5 + self.height/2) * math.cos(self.angle)
+            spark_y = (self.screen_w // 2) + (self.radius*1.5 + self.height/2) * math.sin(self.angle)
             spark_velocity_x = self.spark_manager.properties.velocity_rate * math.cos(self.angle)
             spark_velocity_y = self.spark_manager.properties.velocity_rate * math.sin(self.angle)
 
-        # Make sparks fly inward, audjust starting position for half height
+        # Make sparks fly inward, audjust starting position for half height and bigger radius
         elif self.visual_type == "CIRCLE_INNER":
-            spark_x = (self.screen_w // 2) + (self.radius - self.height/2) * math.cos(self.angle)
-            spark_y = (self.screen_w // 2) + (self.radius - self.height/2) * math.sin(self.angle)
+            spark_x = (self.screen_w // 2) + (self.radius*1.5 - self.height) * math.cos(self.angle)
+            spark_y = (self.screen_w // 2) + (self.radius*1.5 - self.height) * math.sin(self.angle)
             spark_velocity_x = -self.spark_manager.properties.velocity_rate * math.cos(self.angle)
             spark_velocity_y = -self.spark_manager.properties.velocity_rate * math.sin(self.angle)
 
@@ -220,30 +220,30 @@ class AudioBar:
 
             pygame.draw.line(self.screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width))
 
-        # Bottom of bar alligned with point on circumference of circle and points inwards. Adjust bar size
+        # Bottom of bar alligned with point on circumference of circle and points inwards. Adjust radius otherwise default size bars overlap
         elif self.visual_type == "CIRCLE_INNER":
             
             # Divide height by 2 because bigger bars for this option look bad
-            end_x = (self.screen_w // 2) + (self.radius - self.height/2) * math.cos(self.angle)
-            end_y = (self.screen_h // 2) + (self.radius - self.height/2) * math.sin(self.angle)
-            start_x = (self.screen_w // 2) + self.radius * math.cos(self.angle)
-            start_y = (self.screen_h // 2) + self.radius * math.sin(self.angle)
+            end_x = (self.screen_w // 2) + (self.radius*1.5 - self.height) * math.cos(self.angle)
+            end_y = (self.screen_h // 2) + (self.radius*1.5 - self.height) * math.sin(self.angle)
+            start_x = (self.screen_w // 2) + self.radius*1.5 * math.cos(self.angle)
+            start_y = (self.screen_h // 2) + self.radius*1.5 * math.sin(self.angle)
 
             # Draw the ring only if the angle is 0. This makes sure only 1 of the bars is rendering it
             if self.angle == 0:
-                pygame.draw.circle(self.screen, self.color, (self.screen_w//2, self.screen_h//2), self.ring_radius)
-                pygame.draw.circle(self.screen, 'Black', (self.screen_w//2, self.screen_h//2), self.ring_radius * self.ring_size)
+                pygame.draw.circle(self.screen, self.color, (self.screen_w//2, self.screen_h//2), self.ring_radius*1.5)
+                pygame.draw.circle(self.screen, 'Black', (self.screen_w//2, self.screen_h//2), self.ring_radius*1.5 * self.ring_size)
 
             pygame.draw.line(self.screen, self.color, (int(start_x), int(start_y)), (int(end_x), int(end_y)), int(self.width * 0.85))
 
-        # Middle of bar alligned with point on circumference of circle
+        # Middle of bar alligned with point on circumference of circle. Audjust height and radius otherwise default size bars overlap
         elif self.visual_type == "CIRCLE_MIDDLE":
 
             # Divide height by 2 because bigger bars for this option look bad
-            end_x = (self.screen_w // 2) + (self.radius + self.height/2) * math.cos(self.angle)
-            end_y = (self.screen_h // 2) + (self.radius + self.height/2) * math.sin(self.angle)
-            start_x = (self.screen_w // 2) + (self.radius - self.height/2) * math.cos(self.angle)
-            start_y = (self.screen_h // 2) + (self.radius - self.height/2) * math.sin(self.angle)
+            end_x = (self.screen_w // 2) + (self.radius*1.5 + self.height/2) * math.cos(self.angle)
+            end_y = (self.screen_h // 2) + (self.radius*1.5 + self.height/2) * math.sin(self.angle)
+            start_x = (self.screen_w // 2) + (self.radius*1.5 - self.height/2) * math.cos(self.angle)
+            start_y = (self.screen_h // 2) + (self.radius*1.5 - self.height/2) * math.sin(self.angle)
 
             # Draw the ring only if the angle is 0. This makes sure only 1 of the bars is rendering it
             if self.angle == 0:

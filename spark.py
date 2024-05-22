@@ -84,6 +84,14 @@ class SparkProperties:
         self.fade_rate = fade_rate
         self.swade = swade
 
+        self.original_limit = limit
+        self.original_spawn_rate = spawn_rate
+        self.original_velocity_rate = velocity_rate
+        self.original_gravity = gravity
+        self.original_size = size
+        self.original_fade_rate = fade_rate
+        self.original_swade = swade
+
         self.random_limit = False
         self.random_spawn = False
         self.random_velocity = False
@@ -134,41 +142,55 @@ class SparkManager:
                 spark.render(screen)
     
     # Update spark property based on option selected
+    # If they were randomized but then not, set it to the original value so that all sparks are in sync
+    # Otherwise they would start from their last random value
     def change_spark_property(self, option, value):
         
         if "LIMIT" in option:
             if value == 0: self.properties.random_limit = True
             else: 
+                if self.properties.random_limit:
+                    self.properties.limit = self.properties.original_limit
                 self.properties.limit = max(0, self.properties.limit + value)
                 self.properties.random_limit = False
 
         elif "SPAWN" in option:
             if value == 0: self.properties.random_spawn = True
             else: 
+                if self.properties.random_spawn:
+                    self.properties.spawn_rate = self.properties.original_spawn_rate
                 self.properties.spawn_rate = max(0, self.properties.spawn_rate + value)
                 self.properties.random_spawn = False
 
         elif "VELOCITY" in option:
             if value == 0: self.properties.random_velocity = True
             else: 
+                if self.properties.random_velocity:
+                    self.properties.velocity_rate = self.properties.original_velocity_rate
                 self.properties.velocity_rate = max(0, self.properties.velocity_rate + value)
                 self.properties.random_velocity = False
 
         elif "GRAVITY" in option:
             if value == 0: self.properties.random_gravity = True
             else: 
+                if self.properties.random_gravity:
+                    self.properties.gravity = self.properties.original_gravity
                 self.properties.gravity = max(0, self.properties.gravity + value)
                 self.properties.random_gravity = False
 
         elif "SIZE" in option:
             if value == 0:self.properties.random_size = True
             else: 
+                if self.properties.random_size:
+                    self.properties.size = self.properties.original_size
                 self.properties.size = max(1, self.properties.size + value)
                 self.properties.random_size = False
 
         elif "FADE" in option: 
             if value == 0: self.properties.random_fade = True
             else: 
+                if self.properties.random_fade:
+                    self.properties.fade_rate= self.properties.original_fade_rate
                 self.properties.fade_rate = max(0, self.properties.fade_rate + value)
                 self.properties.random_fade = False
 
@@ -183,6 +205,6 @@ class SparkManager:
         elif "RESET" in option:
             self.properties.__init__()
             self.sparks = []
-            
+
         elif "SPARK" in option:
             self.gen_sparks = not self.gen_sparks 
