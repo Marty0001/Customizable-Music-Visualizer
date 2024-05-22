@@ -1,14 +1,20 @@
 import pygame
 import librosa
 import numpy as np
+import random
 
+'''
+MusicPlayer class responsible for playing music and extracting audio data
+'''
 class MusicPlayer:
     def __init__(self, playlist):
         self.track_num = 0
         self.playlist = playlist # List of paths to audio files.
+        random.shuffle(playlist)
         self.current_song = self.playlist[self.track_num]
         self.change_time = 0 # Cumulative count of seconds fast forwarded or reveresed
         self.is_paused = False
+        self.is_playing = False
     
     def _load_audio_data(self):
         """
@@ -95,6 +101,7 @@ class MusicPlayer:
         self.change_time = 0
         pygame.mixer.music.load(self.current_song)
         pygame.mixer.music.play()
+        self.is_playing = True
 
     def pause(self):
         """
@@ -111,6 +118,7 @@ class MusicPlayer:
         """
         Stop playing current song
         """
+        self.is_playing = False
         pygame.mixer.music.unload()
 
     def next(self):

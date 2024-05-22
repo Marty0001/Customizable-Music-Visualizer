@@ -1,29 +1,14 @@
-import numpy as np
 import pygame
-import math
 import os
 from music_player import MusicPlayer
-from audio_bar import AudioBar
+from visualizer import Visualizer
+from button import ButtonMenu
 
 PLAYLIST = 'playlist' # Folder containing .mp3 and .wav files
-
-# Create array of AudioBars, each representing a different frequency
-def create_audio_bars(screen_w, screen_h):
-    bars = []
-    radius = min(screen_w, screen_h) // 4  # Radius from center of display for circular display
-    freq_range = np.arange(200, 8000, 50) # Determines number of bars
-    bar_width = (screen_w / len(freq_range)) # Make sure all bars can fit on screen horizontaly
-    angle_step = 2 * math.pi / len(freq_range)  # Change in angle between each bar
-    x = 0 # X position for horizontal bars
-
-    for i, freq in enumerate(freq_range):
-        angle = i * angle_step
-        bars.append(AudioBar(screen_w, screen_h, x, screen_h//2, freq, width=bar_width, angle=angle, radius=radius, color_cycle=True, color_speed=10, gen_sparks=True))
-        x += bar_width
-
-    return bars
+HIDE_MENU = False
 
 def handle_key_presses(event, music_player):
+    global HIDE_MENU
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_SHIFT: # SHIFT + R ARROW KEY
             music_player.next()
@@ -35,6 +20,8 @@ def handle_key_presses(event, music_player):
             music_player.rewind(5)
         elif event.key == pygame.K_SPACE:
             music_player.pause()
+        elif event.key == pygame.K_TAB:
+            HIDE_MENU = not HIDE_MENU
 
 def main(playlist):
    
@@ -46,8 +33,11 @@ def main(playlist):
     screen_h = screen_w
     screen = pygame.display.set_mode([screen_w, screen_h])
 
-    # Create audio bars
-    bars = create_audio_bars(screen_w, screen_h)
+    # Create visualizer
+    visualizer = Visualizer(screen, screen_w, screen_h)
+
+    # Create buttons
+    buttons = ButtonMenu(screen, visualizer)
 
     # Create MusicPlayer object which contains entire playlist of songs
     music_player = MusicPlayer(playlist)
@@ -78,10 +68,13 @@ def main(playlist):
         screen.fill('Black')
 
         # Display bars
-        for bar in bars:
-            bar.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, bar.freq))
-            bar.render(screen, "top")
-       
+        for i, freq in enumerate(visualizer.freq_range):
+            visualizer.update(delta_time, music_player.get_decibel(current_ticks / 1000.0, freq), i)
+
+        # Display buttons
+        if not HIDE_MENU:
+            buttons.update()
+
         pygame.display.update()
 
     pygame.quit()
@@ -92,7 +85,3 @@ if __name__ == "__main__":
     playlist = [os.path.join(PLAYLIST, song) for song in songs 
                 if os.path.isfile(os.path.join(PLAYLIST, song)) and song.lower().endswith(('.mp3', '.wav'))]
     main(playlist)
-
-    # for buttons, have button super class, and child classes for render type, sparks, bars.
-    # main button menu has button for all the child class types, when clicked opens sub-menu
-    # have tab open and close the button menu
