@@ -18,6 +18,7 @@
     <li>Velocity</li>
     <li>Fade rate</li>
     <li>Swade motion</li>
+    <li>Height Threshold</li>
 </ul>
 
 ![spark1](https://github.com/Marty0001/Customizable-Music-Visualizer/assets/123718743/66f07cf6-8ef9-4875-80db-ce60d6fb7a77)
@@ -25,5 +26,11 @@
 ![spark2](https://github.com/Marty0001/Customizable-Music-Visualizer/assets/123718743/3224c43c-86c0-49c8-83c9-895ea3f893bf)
 
 <br>
+
+<span>Added special smoothing and rotate properties. Can adjust the smoothing factor and rotation speed</span>
+
+![smooth](https://github.com/Marty0001/Customizable-Music-Visualizer/assets/123718743/fb2abb05-bfe4-4c02-a055-f9ae0c555c1b)
+![rotate](https://github.com/Marty0001/Customizable-Music-Visualizer/assets/123718743/56f19dbc-9646-41ea-9fd9-97ca840cbeca)
+
 
 <span>To run, use 'pip install -r requirements.txt', change the PLAYLIST file name in main.py if needed, and it should be good to go by running main.py</span>
