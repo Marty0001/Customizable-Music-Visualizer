@@ -21,6 +21,7 @@ class Spark:
         self.fade_rate_sum = 0
         self.swade_sum = 0
         self.active = True
+        
 
     def update(self, delta_time, screen_w, screen_h):
         """
@@ -75,7 +76,7 @@ class Spark:
 SparkProperties class responsible for holding behavior properties of spark
 '''
 class SparkProperties:
-    def __init__(self, limit=2, spawn_rate=50, velocity_rate=1, gravity=0.01, size=1.5, fade_rate=0.05, swade=False):
+    def __init__(self, limit=2, spawn_rate=50, velocity_rate=1, gravity=0.01, size=1.5, fade_rate=0.05, swade=False, threshold = 0.05):
         self.limit = limit
         self.spawn_rate = spawn_rate
         self.velocity_rate = velocity_rate
@@ -83,6 +84,7 @@ class SparkProperties:
         self.size = size
         self.fade_rate = fade_rate
         self.swade = swade
+        self.threshold = threshold
 
         self.original_limit = limit
         self.original_spawn_rate = spawn_rate
@@ -202,6 +204,8 @@ class SparkManager:
                 else:
                     self.properties.swade = not self.properties.swade
                 self.properties.random_swade = False
+        elif "THRESHOLD" in option: 
+            self.properties.threshold = max (0, self.properties.threshold + value)
         elif "RESET" in option:
             self.properties.__init__()
             self.sparks = []

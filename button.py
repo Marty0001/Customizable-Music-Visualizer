@@ -21,7 +21,7 @@ class Button:
         self.clicked = False
         self.value = value
 
-        self.font = pygame.font.Font(size = 18)
+        self.font = pygame.font.Font(size = 16)
 
     # Draw the button and check for mouse click
     def update(self):
@@ -72,6 +72,7 @@ class ButtonMenu():
         self.main_buttons.append(CircleButton(self.screen, self.x, self.height*7, self.width, self.height, "CIRCLE PROPERTIES", self.visualizer))
         self.main_buttons.append(SparkButton(self.screen, self.x, self.height*8.5, self.width, self.height, "SPARK PROPERTIES", self.visualizer))
         self.main_buttons.append(ColorButton(self.screen, self.x, self.height*10, self.width, self.height, "COLOR PROPERTIES", self.visualizer))
+        self.main_buttons.append(SpecialButton(self.screen, self.x, self.height*11.5, self.width, self.height, "SPECIAL PROPERTIES", self.visualizer))
 
     
     def update(self):
@@ -157,11 +158,11 @@ class BarButton(Button):
         self.buttons.append(Button (screen, x, y + (height * 6.5), width, height, "MIN HEIGHT +", value=1))
         self.buttons.append(Button (screen, x, y + (height * 7.5), width, height, "MIN HEIGHT -", value=-1))
 
-        self.buttons.append(Button (screen, x, y + (height * 9), width, height, "GROW SPEED +", value=1))
-        self.buttons.append(Button (screen, x, y + (height * 10), width, height, "GROW SPEED -", value=-1))
+        self.buttons.append(Button (screen, x, y + (height * 9), width, height, "GROW SPEED +", value=-0.01))
+        self.buttons.append(Button (screen, x, y + (height * 10), width, height, "GROW SPEED -", value=0.01))
 
-        self.buttons.append(Button (screen, x, y + (height * 11.5), width, height, "SHRINK SPEED +", value=1))
-        self.buttons.append(Button (screen, x, y + (height * 12.5), width, height, "SHRINK SPEED -", value=-1))
+        self.buttons.append(Button (screen, x, y + (height * 11.5), width, height, "SHRINK SPEED +", value=-0.01))
+        self.buttons.append(Button (screen, x, y + (height * 12.5), width, height, "SHRINK SPEED -", value=0.01))
 
         self.buttons.append(Button (screen, x, y + (height * 14), width, height, "RESET BARS", value=True))
 
@@ -174,8 +175,8 @@ class BarButton(Button):
             # Get info from first bar to display
             show_info = self.visualizer.bars[0]
             info_text = (f"width: {round(show_info.width, 1)}, max height: {show_info.max_height}, " 
-                f"min height: {show_info.min_height}, grow speed: {show_info.grow_speed}, "
-                f"shrink speed: {show_info.shrink_speed}")
+                f"min height: {show_info.min_height}, grow speed: {round(show_info.grow_speed, 3)}, "
+                f"shrink speed: {round(show_info.shrink_speed, 3)}")
             text = self.font.render(info_text, True, 'White')
             pygame.draw.rect(self.screen, 'Black', (self.x, self.y - self.height, text.get_width() + 4, self.height))
             self.screen.blit(text, (self.x, self.y - self.height))
@@ -207,9 +208,9 @@ class SparkButton(Button):
         self.buttons.append(Button (screen, x, y + (height * 4), width, height, "RANDOM LIMIT", value=0))
         self.buttons.append(Button (screen, x, y + (height * 5), width, height, "LIMIT -", value=-1))
 
-        self.buttons.append(Button (screen, x, y + (height * 6.5), width, height, "SPAWN +", value=-50))
+        self.buttons.append(Button (screen, x, y + (height * 6.5), width, height, "SPAWN RATE +", value=-50))
         self.buttons.append(Button (screen, x, y + (height * 7.5), width, height, "RANDOM SPAWN", value=0))
-        self.buttons.append(Button (screen, x, y + (height * 8.5), width, height, "SPAWN -", value=50))
+        self.buttons.append(Button (screen, x, y + (height * 8.5), width, height, "SPAWN RATE -", value=50))
 
         self.buttons.append(Button (screen, x, y + (height * 10), width, height, "SIZE +", value=1))
         self.buttons.append(Button (screen, x, y + (height * 11), width, height, "RANDOM SIZE", value=0))
@@ -230,7 +231,10 @@ class SparkButton(Button):
         self.buttons.append(Button (screen, x, y + (height * 24), width, height, "SWADE ON / OFF", value=False))
         self.buttons.append(Button (screen, x, y + (height * 25), width, height, "RANDOM SWADE", value=True))
 
-        self.buttons.append(Button (screen, x, y + (height * 26.5), width, height, "RESET SPARKS", value=True))
+        self.buttons.append(Button (screen, x, y + (height * 26.5), width, height, "HEIGHT THRESHOLD +", value=0.05))
+        self.buttons.append(Button (screen, x, y + (height * 27.5), width, height, "HEIGHT THRESHOLD -", value=-0.05))
+
+        self.buttons.append(Button (screen, x, y + (height * 29), width, height, "RESET SPARKS", value=True))
 
     def update(self):
         self.render()
@@ -242,7 +246,8 @@ class SparkButton(Button):
             show_info = self.visualizer.bars[0]
             info_text = (f"limit: {round(show_info.spark_manager.properties.limit)}, spawn: {round(show_info.spark_manager.properties.spawn_rate)}ms, " 
                 f"size: {round(show_info.spark_manager.properties.size, 3)}, fade: {round(show_info.spark_manager.properties.fade_rate, 7)}, gravity: "
-                f"{round(show_info.spark_manager.properties.gravity, 4)}, velocity: {round(show_info.spark_manager.properties.velocity_rate, 3)}")
+                f"{round(show_info.spark_manager.properties.gravity, 4)}, velocity: {round(show_info.spark_manager.properties.velocity_rate, 3)}, "
+                f"height threshold: {round(show_info.spark_manager.properties.threshold, 2)}")
             text = self.font.render(info_text, True, 'White')
             pygame.draw.rect(self.screen, 'Black', (self.x, self.y - self.height, text.get_width() + 4, self.height))
             self.screen.blit(text, (self.x, self.y - self.height))
@@ -270,8 +275,8 @@ class CircleButton(Button):
         self.visualizer = visualizer
         self.buttons = []
 
-        self.buttons.append(Button (screen, x, y + (height * 1.5), width, height, "RADIUS +", value=2))
-        self.buttons.append(Button (screen, x, y + (height * 2.5), width, height, "RADIUS -", value=-2))
+        self.buttons.append(Button (screen, x, y + (height * 1.5), width, height, "RADIUS +", value=5))
+        self.buttons.append(Button (screen, x, y + (height * 2.5), width, height, "RADIUS -", value=-5))
 
         self.buttons.append(Button (screen, x, y + (height * 4), width, height, "RING RADIUS +", value=5))
         self.buttons.append(Button (screen, x, y + (height * 5), width, height, "RING RADIUS -", value=-5))
@@ -280,6 +285,7 @@ class CircleButton(Button):
         self.buttons.append(Button (screen, x, y + (height * 7.5), width, height, "RING SIZE -", value=0.02))
 
         self.buttons.append(Button (screen, x, y + (height * 9), width, height, "RESET CIRCLE", value=True))
+
     
     def update(self):
         self.render()
@@ -318,5 +324,48 @@ class ColorButton(Button):
 
         if self.toggled:
             self.text = "BACK"
+        else:
+            self.text = self.primary_text
+
+# Special properties that reqire bars to share information are handled in visualizer class
+class SpecialButton(Button):
+    def __init__(self, screen, x, y, width, height, text, visualizer, visible=False):
+        super().__init__(screen, x, y, width, height, text, visible)
+        self.primary_text = text
+        self.secondary_text = "BACK"
+        self.visualizer = visualizer
+        self.buttons = []
+
+        self.buttons.append(Button (screen, x, y + (height * 1.5), width, height, "ROTATION SPEED +", value=-1))
+        self.buttons.append(Button (screen, x, y + (height * 2.5), width, height, "ROTATION ON/OFF", value=0))
+        self.buttons.append(Button (screen, x, y + (height * 3.5), width, height, "ROTATION SPEED -", value=1))
+
+        self.buttons.append(Button (screen, x, y + (height * 5), width, height, "SMOOTHING +", value=-0.1))
+        self.buttons.append(Button (screen, x, y + (height * 6), width, height, "SMOOTHING ON/OFF", value=0))
+        self.buttons.append(Button (screen, x, y + (height * 7), width, height, "SMOOTHING -", value=0.1))
+
+        self.buttons.append(Button (screen, x, y + (height * 8.5), width, height, "RESET", value=1))
+
+    def update(self):
+        self.render()
+        self.check_clicked()
+
+        # If toggled, render sub-buttons and change text to 'BACK'
+        if self.toggled:
+            # Get info to display
+            info_text = (f"rotation speed: {self.visualizer.rotate_speed}, smoothing factor: {round(self.visualizer.smoothing_factor, 3)}")
+            text = self.font.render(info_text, True, 'White')
+            pygame.draw.rect(self.screen, 'Black', (self.x, self.y - self.height, text.get_width() + 4, self.height))
+            self.screen.blit(text, (self.x, self.y - self.height))
+        
+            self.text = self.secondary_text
+
+            # Scan the sub-buttons to see if they were clicked and send the value to visualizer
+            for button in self.buttons:
+                if button.toggled:
+                    button.toggled = False
+                    self.visualizer.change_special_property(button.text, button.value)
+
+                button.update()
         else:
             self.text = self.primary_text

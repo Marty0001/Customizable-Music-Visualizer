@@ -32,6 +32,13 @@ class Visualizer:
         self.bars = self.create_audio_bars()
         self.visual_type = VisualType.BOTTOM
 
+        self.smooth_enabled = False
+        self.smoothing_factor = 1.5
+        self.rotation_enabled = False
+        self.rotate_speed = 10
+        self.rotate_ticks = 0
+
+
     def create_audio_bars(self):
         bars = []
         radius = min(self.screen_w, self.screen_h) // 4  # Radius from center of display for circular display
@@ -52,6 +59,7 @@ class Visualizer:
         for bar in self.bars:
                 bar.set_type(self.visual_type.value)
 
+
     # Change a property of every audio bar
     def change_property(self, option, name):
         if self.visual_type in [VisualType.BOTTOM, VisualType.TOP, VisualType.MIDDLE, VisualType.CIRCLE, VisualType.CIRCLE_INNER, VisualType.CIRCLE_MIDDLE]:
@@ -62,9 +70,71 @@ class Visualizer:
     def change_spark_property(self, option, name):
         for bar in self.bars:
                 bar.spark_manager.change_spark_property(option, name)
+    
+    # Change special property which requires the bars to share info with eachother
+    def change_special_property(self, option, value):
+        if "ROTATION" in option:
+            if value == 0:
+                self.rotation_enabled = not self.rotation_enabled
+            else:
+                self.rotate_speed = max (1, self.rotate_speed + value)
+        elif "SMOOTH" in option:
+            if value == 0:
+                self.smooth_enabled = not self.smooth_enabled
+                for bar in self.bars:
+                    bar.smooth_enabled = self.smooth_enabled
+            else:
+                self.smoothing_factor = max (0.1, min(2, self.smoothing_factor + value))
+        elif "RESET" in option:
+            self.rotation_enabled = False
+            self.rotate_speed = 10
+            self.smooth_enabled = False
+            self.smoothing_factor = 1.5
+            self.bars.sort(key=lambda bar: bar.freq) # Reset to original order if rotated
+            for bar in self.bars:
+                    bar.smooth_enabled = False
 
-    # Update every bar
+    # Shift bars array by 1 and resest tick counter
+    def rotate_bars(self):
+        self.rotate_ticks = 0
+        n = len(self.bars)
+        self.bars = self.bars[-1 % n:] + self.bars[:-1 % n]
+
+    # Adjusts the bar heights based on the max hieght of its neighbors
+    def smooth_bars(self):
+        
+        n = len(self.bars)
+        new_heights = np.array([bar.height for bar in self.bars])
+
+        for i in range(n):
+            
+            # Get the index and height of previous, current, and next bar
+            neighbor_indices = [(i - 1) % n, i, (i + 1) % n]
+            neighbor_heights = [self.bars[j].height for j in neighbor_indices]
+
+            average_height = sum(neighbor_heights) / len(neighbor_heights)
+
+            max_height = max(neighbor_heights)
+            #Assign new hieght if its at least 90% as big as its biggest neighbor
+            
+            new_heights[i] = abs(max_height  * (1 - self.smoothing_factor) + average_height * self.smoothing_factor)
+
+        for i in range(n):
+            self.bars[i].height = new_heights[i]
+            self.bars[i].render()
+          
     def update(self, delta_time, decibel, i):
         if self.visual_type in [VisualType.BOTTOM, VisualType.TOP, VisualType.MIDDLE, VisualType.CIRCLE, VisualType.CIRCLE_INNER, VisualType.CIRCLE_MIDDLE]:
             self.bars[i].update(delta_time, decibel)
+
+            # Only rotate and smooth after all bars have been updated
+            if i == len(self.bars) - 1:
+                if self.rotation_enabled:
+                    if self.rotate_ticks > self.rotate_speed:
+                        self.rotate_bars()
+                    self.rotate_ticks+=1
+                if self.smooth_enabled:
+                    self.smooth_bars()
+        
+                        
         

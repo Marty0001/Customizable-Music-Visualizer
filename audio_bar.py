@@ -19,7 +19,7 @@ Audio bar class. Each instance is 1 singular bar
 '''
 class AudioBar:
     def __init__(self, screen, screen_w, screen_h, x, y, freq, color=(255, 255, 255), width=3, min_height=1, max_height=200, 
-    min_decibel=-80, max_decibel=0, shrink_speed=20, grow_speed=40, angle=0, radius=0, color_cycle=True, color_speed=50): 
+    min_decibel=-80, max_decibel=0, shrink_speed=0.05, grow_speed=0.05, angle=0, radius=0, color_cycle=True, color_speed=50): 
         self.screen = screen 
         self.screen_w, self.screen_h = screen_w, screen_h
         self.x, self.y = x, y
@@ -56,6 +56,8 @@ class AudioBar:
         self.visual_type = "CIRCLE"
 
         self.spark_manager = SparkManager()
+
+        self.smooth_enabled = False
     
     def _update_color_cycle(self, delta_time):
         """
@@ -86,7 +88,7 @@ class AudioBar:
             spark_velocity_x = self.spark_manager.properties.velocity_rate * math.cos(self.angle)
             spark_velocity_y = self.spark_manager.properties.velocity_rate * math.sin(self.angle)
 
-        # Make sparks fly inward, audjust starting position for half height and bigger radius
+        # Make sparks fly inward, audjust starting position for bigger radius
         elif self.visual_type == "CIRCLE_INNER":
             spark_x = (self.screen_w // 2) + (self.radius*1.5 - self.height) * math.cos(self.angle)
             spark_y = (self.screen_w // 2) + (self.radius*1.5 - self.height) * math.sin(self.angle)
@@ -127,23 +129,27 @@ class AudioBar:
     def change_bar_properties(self, option, value):
         """
         Change properties on button press
+        Make sure to update the decible height ratio when max or min height is changed
         """
         if "WIDTH" in option:
             self.width = max(0, self.width + value)
         elif "MAX" in option:
             self.max_height = max(0, self.max_height + value)
+            self.__decibel_height_ratio = (self.max_height - self.min_height) / (self.max_decibel - self.min_decibel) 
         elif "MIN" in option:
             self.min_height = max(0, self.min_height + value)
+            self.__decibel_height_ratio = (self.max_height - self.min_height) / (self.max_decibel - self.min_decibel) 
         elif "GROW" in option:
-            self.grow_speed = max(1, self.grow_speed + value)
+            self.grow_speed = max(0.01, self.grow_speed + value)
         elif "SHRINK" in option:
-            self.shrink_speed = max(1, self.shrink_speed + value)
+            self.shrink_speed = max(0.01, self.shrink_speed + value)
         elif "RESET BARS" in option:
             self.width = self.original_width
             self.max_height = self.original_max_height
             self.min_height = self.origingal_min_height
             self.grow_speed = self.original_grow_speed
             self.shrink_speed = self.original_shrink_speed
+            self.__decibel_height_ratio = (self.max_height - self.min_height) / (self.max_decibel - self.min_decibel) 
         elif "RING SIZE" in option:
             self.ring_size = min(1, self.ring_size + value)
         elif "RING RADIUS" in option:
@@ -163,10 +169,13 @@ class AudioBar:
         Update the bar's height and color based on the time and decibel.
         Create sparks when bar grows or update spark if already active.
         """
+        
         old_height = self.height
-        desired_height = decibel * self.__decibel_height_ratio + self.max_height
-        speed = (desired_height - self.height) * self.grow_speed if desired_height > self.height else (desired_height - self.height) * self.shrink_speed
-        self.height += speed * delta_time
+        desired_height = (decibel * self.__decibel_height_ratio + self.max_height) 
+        speed = (desired_height - self.height)/self.grow_speed if desired_height > self.height else (desired_height - self.height)/self.shrink_speed
+       
+        self.height = self.height + speed * delta_time 
+
         self._limit()
         
         if self.color_cycle:
@@ -175,16 +184,19 @@ class AudioBar:
         if self.spark_manager.gen_sparks:
             self.spark_manager.update_sparks(delta_time, self.screen_w, self.screen_h)
 
-            # If current spark amount is less than spark_limit and the bar is growing the music is not paused:
-            if len(self.spark_manager.sparks) < self.spark_manager.properties.limit and self.height > old_height and delta_time > 0:
+            # If current spark amount is less than spark_limit and the bar is growing and the height is above the threshold the music is not paused:
+            if (len(self.spark_manager.sparks) < self.spark_manager.properties.limit and desired_height > old_height and 
+            self.height > self.max_height*self.spark_manager.properties.threshold and delta_time > 0):
                 # If ms ticks since last spark creation is greater than the spawn rate, reset the ticks, and create spark
                 if self.spark_manager.spark_ticks > self.spark_manager.properties.spawn_rate:
                     self.spark_manager.spark_ticks = 0
                     spark_x, spark_y, spark_velocity_x, spark_velocity_y = self._get_spark_position_and_velocity()
                     self.spark_manager.create_spark(spark_x, spark_y, spark_velocity_x, spark_velocity_y, self.color)
             self.spark_manager.spark_ticks += 1
-        
-        self.render()
+
+        # If smooth is enabled, let the visualizer class render indstead after the new heights have been assigned
+        if not self.smooth_enabled:
+            self.render()
 
     def render(self):
         """
