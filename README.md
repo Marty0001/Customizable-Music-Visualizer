@@ -34,7 +34,10 @@
 
 
 <span>To run:
+
 -'pip install -r requirements.txt' 
+
 -add your 'playlist' directory which contains .mp3 or .wav files to the same level as main.py
+
 -it should be good to go by running main.py
 </span>
