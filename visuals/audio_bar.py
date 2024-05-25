@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from spark import SparkManager
+from visuals.spark import SparkManager
 
 '''
 Audio bar class. Each instance is 1 singular bar
@@ -118,9 +118,6 @@ class AudioBar:
         return spark_x, spark_y, spark_velocity_x, spark_velocity_y
     
     def _limit(self):
-        """
-        Ensure the bar's height remains within the min and max height bounds.
-        """
         if self.height < self.min_height:
             self.height = self.min_height
         if self.height > self.max_height:
@@ -184,9 +181,9 @@ class AudioBar:
         if self.spark_manager.gen_sparks:
             self.spark_manager.update_sparks(delta_time, self.screen_w, self.screen_h)
 
-            # If current spark amount is less than spark_limit and the bar is growing and the height is above the threshold the music is not paused:
-            if (len(self.spark_manager.sparks) < self.spark_manager.properties.limit and desired_height > old_height and 
-            self.height > self.max_height*self.spark_manager.properties.threshold and delta_time > 0):
+            # If current spark amount is less than spark_limit and the bar is growing and the height is above the threshold and the music is not paused:
+            if ((len(self.spark_manager.sparks) < self.spark_manager.properties.limit) and (desired_height > old_height) and 
+            (self.height > self.max_height*self.spark_manager.properties.threshold) and (delta_time > 0)):
                 # If ms ticks since last spark creation is greater than the spawn rate, reset the ticks, and create spark
                 if self.spark_manager.spark_ticks > self.spark_manager.properties.spawn_rate:
                     self.spark_manager.spark_ticks = 0
@@ -199,10 +196,6 @@ class AudioBar:
             self.render()
 
     def render(self):
-        """
-        Render the bar on the screen based on the selected render type.
-        Render the spark if it is active.
-        """
         # Bottom of bar alligned with botttom of screen
         if self.visual_type == "BOTTOM":
             self.y = self.screen_h - self.height

@@ -1,5 +1,5 @@
 import pygame
-from visualizer import Visualizer, VisualType
+import visuals
 
 '''
 Button Super Class
@@ -114,13 +114,14 @@ class TypeButton(Button):
         self.primary_text = text
         self.secondary_text = "BACK"
         self.visualizer = visualizer
+        self.visual_type = visuals.VisualType
         self.buttons = []
-        self.buttons.append(Button (screen, x, y + (height * 1.5), width, height, "BOTTOM", value=VisualType.BOTTOM))
-        self.buttons.append(Button (screen, x, y + (height * 3), width, height, "TOP", value=VisualType.TOP))
-        self.buttons.append(Button (screen, x, y + (height * 4.5), width, height, "MIDDLE", value=VisualType.MIDDLE))
-        self.buttons.append(Button (screen, x, y + (height * 6), width, height, "CIRCLE", value=VisualType.CIRCLE))
-        self.buttons.append(Button (screen, x, y + (height * 7.5), width, height, "INNER CIRLCE", value=VisualType.CIRCLE_INNER))
-        self.buttons.append(Button (screen, x, y + (height * 9), width, height, "MIDDLE CIRLCE", value=VisualType.CIRCLE_MIDDLE))
+        self.buttons.append(Button (screen, x, y + (height * 1.5), width, height, "BOTTOM", value=self.visual_type.BOTTOM))
+        self.buttons.append(Button (screen, x, y + (height * 3), width, height, "TOP", value=self.visual_type.TOP))
+        self.buttons.append(Button (screen, x, y + (height * 4.5), width, height, "MIDDLE", value=self.visual_type.MIDDLE))
+        self.buttons.append(Button (screen, x, y + (height * 6), width, height, "CIRCLE", value=self.visual_type.CIRCLE))
+        self.buttons.append(Button (screen, x, y + (height * 7.5), width, height, "INNER CIRLCE", value=self.visual_type.CIRCLE_INNER))
+        self.buttons.append(Button (screen, x, y + (height * 9), width, height, "MIDDLE CIRLCE", value=self.visual_type.CIRCLE_MIDDLE))
 
     def update(self):
         self.render()

@@ -33,4 +33,8 @@
 ![rotate](https://github.com/Marty0001/Customizable-Music-Visualizer/assets/123718743/56f19dbc-9646-41ea-9fd9-97ca840cbeca)
 
 
-<span>To run, use 'pip install -r requirements.txt', change the PLAYLIST file name in main.py if needed, and it should be good to go by running main.py</span>
+<span>To run:
+-'pip install -r requirements.txt' 
+-add your 'playlist' directory which contains .mp3 or .wav files to the same level as main.py
+-it should be good to go by running main.py
+</span>

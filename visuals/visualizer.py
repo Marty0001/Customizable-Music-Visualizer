@@ -1,8 +1,8 @@
 import pygame
 import numpy as np
 import math
-from audio_bar import AudioBar
 from enum import Enum
+from visuals.audio_bar import AudioBar
 
 # All visual types
 class VisualType(Enum):
@@ -41,7 +41,7 @@ class Visualizer:
 
     def create_audio_bars(self):
         bars = []
-        radius = min(self.screen_w, self.screen_h) // 4  # Radius from center of display for circular display
+        radius = min(self.screen_w, self.screen_h) // 4  # Radius from center of display
         bar_width = (self.screen_w / len(self.freq_range)) # Make sure all bars can fit on screen horizontaly
         angle_step = 2 * math.pi / len(self.freq_range)  # Change in angle between each bar
         x = 0 # X position for horizontal bars
@@ -53,20 +53,16 @@ class Visualizer:
 
         return bars
     
-    # Change the current visual type and update every bar
     def change_visual_type(self, visual_type): 
         self.visual_type = visual_type
         for bar in self.bars:
                 bar.set_type(self.visual_type.value)
 
-
-    # Change a property of every audio bar
     def change_property(self, option, name):
         if self.visual_type in [VisualType.BOTTOM, VisualType.TOP, VisualType.MIDDLE, VisualType.CIRCLE, VisualType.CIRCLE_INNER, VisualType.CIRCLE_MIDDLE]:
             for bar in self.bars:
                 bar.change_bar_properties(option, name)
     
-    # Change a property of every spark
     def change_spark_property(self, option, name):
         for bar in self.bars:
                 bar.spark_manager.change_spark_property(option, name)
@@ -115,7 +111,6 @@ class Visualizer:
             average_height = sum(neighbor_heights) / len(neighbor_heights)
 
             max_height = max(neighbor_heights)
-            #Assign new hieght if its at least 90% as big as its biggest neighbor
             
             new_heights[i] = abs(max_height  * (1 - self.smoothing_factor) + average_height * self.smoothing_factor)
 

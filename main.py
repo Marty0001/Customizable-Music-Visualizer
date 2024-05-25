@@ -1,8 +1,7 @@
 import pygame
 import os
-from music_player import MusicPlayer
-from visualizer import Visualizer
-from button import ButtonMenu
+import components
+import visuals
 
 PLAYLIST = 'playlist' # Folder containing .mp3 and .wav files
 HIDE_MENU = False
@@ -34,13 +33,13 @@ def main(playlist):
     screen = pygame.display.set_mode([screen_w, screen_h])
 
     # Create visualizer
-    visualizer = Visualizer(screen, screen_w, screen_h)
+    visualizer = visuals.Visualizer(screen, screen_w, screen_h)
 
     # Create buttons
-    buttons = ButtonMenu(screen, visualizer)
+    buttons = components.ButtonMenu(screen, visualizer)
 
     # Create MusicPlayer object which contains entire playlist of songs
-    music_player = MusicPlayer(playlist)
+    music_player = components.MusicPlayer(playlist)
     music_player.play()
     
     # Initialize timing
