@@ -7,22 +7,21 @@ Spark class responsible for rendering and updating the spark
 '''
 class Spark:
     def __init__(self, x, y, velocity_x, velocity_y, size, fade_rate, velocity_rate, gravity, color, swade, shape = "circle"):
-        self.x, self.y = x, y
-        self.velocity_x, self.velocity_y = velocity_x, velocity_y
-        self.size = size 
-        self.fade_rate = fade_rate
-        self.velocity_rate = velocity_rate
-        self.gravity = gravity
-        self.color = pygame.Color(color)
-        self.swade = swade
+        self.__x, self.__y = x, y
+        self.__velocity_x, self.__velocity_y = velocity_x, velocity_y
+        self.__size = size 
+        self.__fade_rate = fade_rate
+        self.__velocity_rate = velocity_rate
+        self.__gravity = gravity
+        self.__color = pygame.Color(color)
+        self.__swade = swade
         self.shape = shape
 
-        self.swade_direction = random.choice([True, False])
-        self.fade_rate_sum = 0
-        self.swade_sum = 0
-        self.active = True
+        self.__swade_direction = random.choice([True, False])
+        self.__fade_rate_sum = 0
+        self.__swade_sum = 0
+        self.__active = True
         
-
     def update(self, delta_time, screen_w, screen_h):
         """
         Update the spark's position and color over time.
@@ -30,53 +29,53 @@ class Spark:
         Deactivate the spark if it goes out of bounds or fades to black.
         """
         # Apply gravity to the spark
-        self.velocity_y += self.gravity
+        self.__velocity_y += self.__gravity
 
         # Update the spark position
-        self.x += self.velocity_x
-        self.y += self.velocity_y
+        self.__x += self.__velocity_x
+        self.__y += self.__velocity_y
 
         # Make spark randomly swade back and fourth smoothly
-        if self.swade:
-            if self.swade_direction:
-                self.swade_sum += random.uniform(0, 0.01)
+        if self.__swade:
+            if self.__swade_direction:
+                self.__swade_sum += random.uniform(0, 0.01)
             else:
-                self.swade_sum -= random.uniform(0, 0.01)
+                self.__swade_sum -= random.uniform(0, 0.01)
             if random.random() <= 0.05:
-                self.swade_direction = not self.swade_direction
-                self.swade_sum = 0
+                self.__swade_direction = not self.__swade_direction
+                self.__swade_sum = 0
         
-        self.x += self.swade_sum
-        self.y += self.swade_sum
+        self.__x += self.__swade_sum
+        self.__y += self.__swade_sum
 
-        self.fade_rate_sum += self.fade_rate
+        self.__fade_rate_sum += self.__fade_rate
 
         # Fade towards black
-        r, g, b, a = self.color
-        r = max(0, r - self.fade_rate_sum)
-        g = max(0, g - self.fade_rate_sum)
-        b = max(0, b - self.fade_rate_sum)
-        self.color = pygame.Color(math.ceil(r), math.ceil(g), math.ceil(b), math.ceil(a))
+        r, g, b, a = self.__color
+        r = max(0, r - self.__fade_rate_sum)
+        g = max(0, g - self.__fade_rate_sum)
+        b = max(0, b - self.__fade_rate_sum)
+        self.__color = pygame.Color(math.ceil(r), math.ceil(g), math.ceil(b), math.ceil(a))
 
         # Deactivate the spark if it is fully black or outside of the display
-        if ((self.y < 0 or self.y > screen_h or self.x < 0 or self.x > screen_w) or 
-            (self.color.r == 0 and self.color.g == 0 and self.color.b == 0)):
-            self.active = False
+        if ((self.__y < 0 or self.__y > screen_h or self.__x < 0 or self.__x > screen_w) or 
+            (self.__color.r == 0 and self.__color.g == 0 and self.__color.b == 0)):
+            self.__active = False
 
     def is_active(self):
-        return self.active
+        return self.__active
 
     def render(self, screen):
         if self.shape == "rect":
-            pygame.draw.rect(screen, self.color, (self.x, self.y, self.size, self.size))
+            pygame.draw.rect(screen, self.__color, (self.__x, self.__y, self.__size, self.__size))
         elif self.shape == "circle":
-            pygame.draw.circle(screen, self.color, (self.x, self.y), self.size)
+            pygame.draw.circle(screen, self.__color, (self.__x, self.__y), self.__size)
 
 '''
 SparkProperties class responsible for holding behavior properties of spark
 '''
 class SparkProperties:
-    def __init__(self, limit=2, spawn_rate=50, velocity_rate=1, gravity=0.01, size=1.5, fade_rate=0.05, swade=False, threshold = 0.05):
+    def __init__(self, limit=2, spawn_rate=50, velocity_rate=1, gravity=0, size=1.5, fade_rate=0.05, swade=False, threshold = 0.05):
         self.limit = limit
         self.spawn_rate = spawn_rate
         self.velocity_rate = velocity_rate
@@ -111,7 +110,6 @@ class SparkProperties:
         if self.random_fade: self.fade_rate = random.uniform(0, 0.1)
         if self.random_swade: self.swade = random.choice([True, False])
 
-
 '''
 SparkManager Class responsible for cerating, holding, and deleting multiple sparks at a time
 '''
@@ -120,7 +118,7 @@ class SparkManager:
         self.properties = SparkProperties()
         self.sparks = []
         self.spark_ticks = self.properties.spawn_rate # Time between each spark creation
-        self.gen_sparks = True
+        self.gen_sparks = False
 
     def create_spark(self, x, y, velocity_x, velocity_y, color):
         self.properties.randomize_properties() # Will randomize any properties that have their random value as true
@@ -204,11 +202,14 @@ class SparkManager:
                 else:
                     self.properties.swade = not self.properties.swade
                 self.properties.random_swade = False
+                
         elif "THRESHOLD" in option: 
             self.properties.threshold = max (0, self.properties.threshold + value)
+
         elif "RESET" in option:
             self.properties.__init__()
             self.sparks = []
+            self.gen_sparks = False
 
         elif "SPARK" in option:
             self.gen_sparks = not self.gen_sparks 
